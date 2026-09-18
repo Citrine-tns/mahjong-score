@@ -809,11 +809,7 @@ function ScoreTable({
               </colgroup>
 
               <thead>
-                <tr
-                  style={{
-                    height: 60,
-                  }}
-                >
+                <tr className="score-table-row-header">
                   <th
                     style={{
                       whiteSpace:
@@ -850,18 +846,11 @@ function ScoreTable({
                       key={
                         row.tile
                       }
-                      style={{
-                        height: 72,
-                      }}
+                      className="score-table-row"
                     >
-                      <td
-                        style={{
-                          height: 72,
-                          whiteSpace:
-                            "nowrap",
-                        }}
-                      >
+                      <td className="score-table-cell score-table-cell-wait">
                         <img
+                          className="score-table-wait-img"
                           src={
                             tileImages[
                               row
@@ -874,16 +863,12 @@ function ScoreTable({
                                 .tile
                             ]
                           }
-                          style={{
-                            width: 48,
-                            height: 60,
-                          }}
                         />
                       </td>
 
                       <td
+                        className="score-table-cell"
                         style={{
-                          height: 72,
                           whiteSpace:
                             tableMode ===
                             "yaku"
@@ -914,8 +899,8 @@ function ScoreTable({
                       </td>
 
                       <td
+                        className="score-table-cell"
                         style={{
-                          height: 72,
                           whiteSpace:
                             tableMode ===
                             "yaku"

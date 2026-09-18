@@ -558,6 +558,24 @@ th {
   background: #f0f0f0;
 }
 
+.score-table-row-header {
+  height: 60px;
+}
+
+.score-table-row,
+.score-table-cell {
+  height: 72px;
+}
+
+.score-table-cell-wait {
+  white-space: nowrap;
+}
+
+.score-table-wait-img {
+  width: 48px;
+  height: 60px;
+}
+
 td img {
   display: block;
   margin: 0 auto;
@@ -566,16 +584,24 @@ td img {
 /*
  * 狭い画面での表示。
  *
- * ブレークポイントごとにレイアウトを
- * 組み替えるのではなく、常にPC版
- * （DESIGN_WIDTH＝.app の max-width）と
- * 全く同じ比率のまま、画面幅に収まるように
- * transform: scale() で縮小する
- * （App.tsx 側でJSにより実現）。
+ * タブレット以上の幅（600px超）では、
+ * ブレークポイントでレイアウトを組み替える
+ * のではなく、常にPC版（DESIGN_WIDTH＝.app
+ * の max-width）と全く同じ比率のまま、
+ * 画面幅に収まるように transform: scale()
+ * で縮小する（App.tsx 側でJSにより実現）。
  *
  * .scale-inner の幅は常にPC版の幅のまま
  * 固定し、その内部のレイアウトは画面幅に
  * 一切左右されない。
+ *
+ * スマホ幅（600px以下）では、単純な縮小だと
+ * 当たり判定まで小さくなり誤タップしやすく
+ * なるため、下の @media (max-width: 600px)
+ * で専用レイアウトに切り替える
+ * （.scale-inner の幅を100%に戻して
+ * scaleを無効化した上で、手牌・ドラ表示牌を
+ * 全幅表示、牌選択を画面下部に固定する）。
  */
 /*
  * margin: 0 auto ではなく flex + justify-content
@@ -608,4 +634,298 @@ td img {
 .scale-inner {
   flex: 0 0 860px;
   transform-origin: top center;
+}
+
+/*
+ * スマホ幅専用レイアウト。
+ *
+ * - .scale-inner の幅を100%に戻し、
+ *   PC版の固定幅・縮小表示をやめる
+ *   （App.tsx 側でも transform を
+ *   適用しないようにしている）。
+ * - 手牌・副露・ドラ表示牌の牌サイズ
+ *   （--tile-width/--tile-height）は、
+ *   手牌13枚がちょうど画面幅に収まる
+ *   大きさに自動計算する。副露・ドラ
+ *   表示牌も同じ変数を使っているので
+ *   自動的に同じサイズになる。
+ * - 手牌・ドラ表示牌（左カラム）は
+ *   画面横幅いっぱいに。
+ * - 牌選択（右カラム）は画面下部に
+ *   position: sticky で固定する。
+ *   sticky なので、自然な配置位置
+ *   （ドラ表示牌の直後＝点数表の直前）
+ *   より下には行かず、点数表と重ならない。
+ *   輪郭と影を付けて、下に固定されて
+ *   浮いているパネルだと分かるようにする。
+ */
+@media (max-width: 600px) {
+  /*
+   * overflow-x: hidden のままだと、CSSの
+   * 仕様上 overflow-y も自動的に非 visible
+   * 扱いになり、.scale-outer が
+   * position: sticky の基準
+   * （最も近いスクロールコンテナ）に
+   * なってしまい、画面（ビューポート）の
+   * 下端に追従してくれなくなる。
+   * スマホ幅では拡大縮小によるはみ出しの
+   * 心配が無いので、hidden をやめる。
+   */
+  .scale-outer {
+    overflow-x: visible;
+  }
+
+  /*
+   * min-width: 0 が無いと、flexアイテムは
+   * 自身の中身（副露欄など）の
+   * min-content幅より縮まなくなり、結果
+   * ページ全体が横スクロールしてしまう。
+   */
+  .scale-inner {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /*
+   * 手牌13枚がちょうど収まる幅から
+   * 逆算する。
+   * ・.app の padding 24px×2
+   * ・section の padding 16px×2
+   * ・.hand の padding 5px×2 + border 4px×2
+   * を画面幅から差し引いたものを13等分する。
+   *
+   * --picker-tile-width は牌選択の牌の
+   * サイズ。改行が起きない範囲で
+   * 最大まで大きくしたいので、
+   * 一番枚数の多いグループ（萬子・筒子・
+   * 索子＝各10枚）がちょうど1行に
+   * 収まる大きさを画面幅から逆算する
+   * （風牌+三元牌は合わせて7枚しかない
+   * ため、この牌サイズでも自然に1行に
+   * まとまる）。
+   */
+  :root {
+    --tile-width: calc(
+      (100vw - 98px) / 13
+    );
+    --tile-height: calc(
+      var(--tile-width) * 90 /
+        66
+    );
+    --picker-tile-width: calc(
+      (100vw - 107px) / 10
+    );
+  }
+
+  .app-columns {
+    flex-direction: column;
+  }
+
+  .app-column-left {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .app-column-right {
+    flex: none;
+    width: 100%;
+
+    position: sticky;
+    bottom: 0;
+
+    overflow-y: visible;
+  }
+
+  .app-column-right > section {
+    height: auto;
+
+    border-top: 3px solid
+      rgba(255, 255, 255, 0.7);
+    box-shadow: 0 -6px 16px
+      rgba(0, 0, 0, 0.35);
+  }
+
+  /*
+   * 牌選択：牌のサイズを抑え、牌の実際の
+   * 枚数ぴったりの幅で1つの牌種グループを
+   * 表示する（幅を12等分した基準サイズを
+   * 使うことで、結果的に1行に12個前後が
+   * 収まる大きさになる）。
+   *
+   * .tile-groups を縦積みのgridではなく
+   * 横方向に折り返すflexにすることで、
+   * 萬子・筒子・索子（各10枚）はそれぞれ
+   * 単独で1行を使い切り、風牌（4枚）と
+   * 三元牌（3枚）は合わせて7枚分の幅
+   * しか無いため、自然に同じ1行へ収まる
+   * （PC版はこの折り返しを使わず、今まで
+   * 通り風牌と三元牌を別々の行にする）。
+   *
+   * 牌の実際の枚数ぴったりの幅で並べる
+   * ため、1〜9の牌のグループでも
+   * 余白が残らない。
+   *
+   * 縦は折りたたまず、必要な段数
+   * （通常4段）をそのまま全部表示する。
+   */
+  .tile-groups {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .tile-group {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 3px;
+  }
+
+  .tile-button {
+    flex: 0 0
+      var(--picker-tile-width);
+    width: var(
+      --picker-tile-width
+    );
+  }
+
+  /*
+   * ドラ表示牌：立直オンで裏ドラ表示牌が
+   * 隣に並んだ時、見出し文字
+   * （「裏ドラ表示牌」等）の幅で
+   * 押し広げられて横にはみ出さないよう、
+   * 縮んで折り返せるようにする。
+   */
+  .indicator-panel {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  /*
+   * 設定・点数まわりのチェックボックス／
+   * プルダウン／ラベルは、折り返さず
+   * 1行に収まるよう、画面幅(vw)基準で
+   * 自動的に縮める。px固定だと画面幅に
+   * よって入りきらなくなるため、vw単位で
+   * 幅に比例したサイズにしている。
+   */
+  .setting-line {
+    flex-wrap: nowrap;
+    gap: 0.8vw;
+  }
+
+  .setting-row {
+    gap: 0.4vw;
+  }
+
+  .setting-row span {
+    font-size: 2.1vw;
+    white-space: nowrap;
+  }
+
+  .setting-row select {
+    padding: 0.4vw 0.5vw;
+    font-size: 2.1vw;
+  }
+
+  /*
+   * margin: 15px 0 はベースのフォント
+   * サイズ(16px相当)に対する余白なので、
+   * 文字サイズを 2.2vw まで縮めたのと
+   * 同じ比率（2.2/16）で余白も縮める。
+   */
+  .score-riichi {
+    flex-wrap: nowrap;
+    gap: 1.5vw;
+    margin: 2vw 0;
+  }
+
+  .score-riichi label span {
+    font-size: 2.2vw;
+    white-space: nowrap;
+  }
+
+  .score-chance-yaku {
+    flex-wrap: nowrap;
+    gap: 1vw;
+    padding: 1vw 1.3vw;
+  }
+
+  .score-chance-yaku-title {
+    font-size: 2.2vw;
+    white-space: nowrap;
+  }
+
+  .score-chance-yaku-item {
+    gap: 0.6vw;
+  }
+
+  .score-chance-yaku-item span {
+    font-size: 2.2vw;
+    white-space: nowrap;
+  }
+
+  input[type="checkbox"] {
+    width: 2.6vw;
+    height: 2.6vw;
+  }
+
+  /*
+   * 点数表・点数/翻符/役の切替ボタン・
+   * それらの余白は、他の要素と同じく
+   * PCのpx値に対して同じ比率
+   * （2.2vw / 16px ≒ 0.1375）で
+   * 縮小し、PC版と同じ大きさの
+   * バランスになるようにする。
+   */
+  .table-mode-switch {
+    margin: 0 0 2vw;
+    padding: 0.5vw;
+  }
+
+  .table-mode-switch-thumb {
+    top: 0.5vw;
+    bottom: 0.5vw;
+    left: 0.5vw;
+
+    width: calc(
+      (100% - 1vw) / 3
+    );
+  }
+
+  .table-mode-switch button {
+    padding: 1vw 0;
+    font-size: 1.9vw;
+  }
+
+  th,
+  td {
+    padding: 1.4vw;
+  }
+
+  .score-table-row-header {
+    height: 8.25vw;
+  }
+
+  .score-table-row,
+  .score-table-cell {
+    height: 9.9vw;
+  }
+
+  .score-table-wait-img {
+    width: 6.6vw;
+    height: 8.25vw;
+  }
+
+  /*
+   * セルの高さだけ縮めても中の文字の
+   * フォントサイズがPCのままだと、
+   * 文字がはみ出して結局セルが
+   * 伸びてしまう。文字も同じ比率で
+   * 縮める。
+   */
+  th,
+  td {
+    font-size: 2.2vw;
+  }
 }
