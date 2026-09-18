@@ -68,6 +68,17 @@ const initialScoreOptions: ScoreOptions =
  */
 const DESIGN_WIDTH = 860;
 
+/*
+ * この幅以下はスマホ向けの専用レイアウト
+ * （手牌・ドラ表示牌を全幅表示、牌選択を
+ * 画面下部に固定）に切り替える。タブレット
+ * 以上（横幅の余裕がある画面）は、狭くても
+ * 引き続きPC版をそのまま縮小表示する
+ * （DESIGN_WIDTH のスケール方式）。
+ */
+const MOBILE_QUERY =
+  "(max-width: 600px)";
+
 function App() {
   const leftColumnRef =
     useRef<HTMLDivElement>(
@@ -97,6 +108,10 @@ function App() {
    * 掛かっている transform: scale() の
    * 影響を受けないため、下の拡大縮小の
    * 仕組みと組み合わせても正しく機能する。
+   *
+   * スマホ向けレイアウト（縦積み＋牌選択が
+   * 画面下部固定）では高さを合わせる意味が
+   * 無いため、その場合は何もしない。
    */
   useEffect(() => {
     const leftEl =
@@ -112,9 +127,26 @@ function App() {
       return;
     }
 
+    const mediaQuery =
+      window.matchMedia(
+        MOBILE_QUERY
+      );
+
     const SECTION_GAP = 30;
 
     const syncHeight = () => {
+      if (mediaQuery.matches) {
+        if (
+          rightEl.style
+            .height !== ""
+        ) {
+          rightEl.style.height =
+            "";
+        }
+
+        return;
+      }
+
       const nextHeight =
         leftEl.offsetHeight -
         SECTION_GAP;
@@ -148,19 +180,33 @@ function App() {
       leftEl
     );
 
+    mediaQuery.addEventListener(
+      "change",
+      syncHeight
+    );
+
     return () => {
       observer.disconnect();
+
+      mediaQuery.removeEventListener(
+        "change",
+        syncHeight
+      );
     };
   }, []);
 
   /*
-   * レイアウトは常にPC版（DESIGN_WIDTH）の
-   * 幅で組んだ状態のまま、画面がそれより
-   * 狭い時だけ transform: scale() で全体を
-   * 縦横同じ比率で縮小する。
-   * ブレークポイントごとにレイアウトを
-   * 組み替えるのではなく、常にPC版と
-   * 全く同じ比率で1画面に収める方針。
+   * タブレット以上（MOBILE_QUERY に
+   * 該当しない幅）では、PC版
+   * （DESIGN_WIDTH）の幅で組んだ状態の
+   * まま、画面がそれより狭い時だけ
+   * transform: scale() で全体を縦横
+   * 同じ比率で縮小する。
+   *
+   * スマホ幅（MOBILE_QUERY に該当）では
+   * この拡大縮小は行わず、CSS側の
+   * 専用レイアウト（.scale-inner の幅を
+   * 100%に戻す等）にそのまま任せる。
    */
   useEffect(() => {
     const outerEl =
@@ -176,7 +222,32 @@ function App() {
       return;
     }
 
+    const mediaQuery =
+      window.matchMedia(
+        MOBILE_QUERY
+      );
+
     const applyScale = () => {
+      if (mediaQuery.matches) {
+        if (
+          innerEl.style
+            .transform !== ""
+        ) {
+          innerEl.style.transform =
+            "";
+        }
+
+        if (
+          outerEl.style
+            .height !== ""
+        ) {
+          outerEl.style.height =
+            "";
+        }
+
+        return;
+      }
+
       const scale = Math.min(
         1,
         outerEl.clientWidth /
@@ -229,7 +300,17 @@ function App() {
       innerEl
     );
 
+    mediaQuery.addEventListener(
+      "change",
+      applyScale
+    );
+
     return () => {
+      mediaQuery.removeEventListener(
+        "change",
+        applyScale
+      );
+
       observer.disconnect();
     };
   }, []);
