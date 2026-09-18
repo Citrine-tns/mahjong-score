@@ -59,10 +59,6 @@ type WaitRow = {
   tsumoText: string;
 };
 
-/*
- * 点数・翻符数・役名の3種類の表を
- * セグメントコントロールで切り替える。
- */
 type TableMode =
   | "score"
   | "hanFu"
@@ -111,19 +107,6 @@ function intersectSets(
   );
 }
 
-/*
- * 無効な点数セルに入れる斜線。
- *
- * セルの角から角へ、表の罫線と
- * 同じ太さ・色の直線を引く。
- * セルの縦横比に依らず正しく角へ
- * 届くよう、viewBox を引き伸ばして
- * 描画する（vectorEffect で線幅だけ
- * 一定に保つ）。
- *
- * th（見出し）には適用せず、
- * tbody の点数セルだけに適用する。
- */
 function DisabledCellDiagonal() {
   return (
     <svg
@@ -169,20 +152,6 @@ function ScoreTable({
     settings.riichi ||
     settings.doubleRiichi;
 
-  /*
-   * ツモ・ロンの有効/無効。
-   *
-   * 海底摸月：ツモのみ成立
-   * 河底撈魚：ロンのみ成立
-   * 嶺上開花：ツモのみ成立
-   * 槍槓：ロンのみ成立
-   *
-   * したがって、
-   * ・海底摸月 → ロン無効
-   * ・河底撈魚 → ツモ無効
-   * ・嶺上開花 → ロン無効
-   * ・槍槓 → ツモ無効
-   */
   const ronDisabled =
     scoreOptions.haitei ||
     scoreOptions.rinshan;
@@ -191,11 +160,6 @@ function ScoreTable({
     scoreOptions.houtei ||
     scoreOptions.chankan;
 
-  /*
-   * 待ちごとに、ロン・ツモそれぞれで
-   * 最も点数が高くなる和了形を選び、
-   * 1行分のデータにまとめる。
-   */
   const rows: WaitRow[] =
     waits
       .map(
@@ -235,10 +199,6 @@ function ScoreTable({
             return null;
           }
 
-          /*
-           * ロンとツモでは役が異なる場合があるため、
-           * それぞれで最も高い和了形を選ぶ。
-           */
           const ron =
             evaluations.reduce(
               (current, next) =>
@@ -272,13 +232,6 @@ function ScoreTable({
               }
             ).tsumo;
 
-          /*
-           * 役が1つ以上あるか。
-           *
-           * ドラ・裏ドラだけでは
-           * yaku.length は増えないため、
-           * 無役として扱う。
-           */
           const ronHasYaku =
             ron.yaku.length > 0;
 
@@ -316,14 +269,6 @@ function ScoreTable({
           row !== null
       );
 
-  /*
-   * 確定役：どの待ち・どちらの和了方でも
-   * 必ず付く役（役名表でのみ表示する）。
-   *
-   * 片方の和了方が海底・河底などで
-   * そもそも成立しない場合は、その和了方は
-   * 判定に含めない。
-   */
   const guaranteedYaku =
     intersectSets(
       rows.flatMap((row) =>
@@ -349,20 +294,6 @@ function ScoreTable({
       )
     );
 
-  /*
-   * 役名表のセルに表示する役名。
-   *
-   * 確定役はすでに表の外側で
-   * まとめて表示しているため、
-   * ここでは重複しないように除く。
-   */
-  /*
-   * 翻符表のセルに表示する中身。
-   *
-   * 満貫以上になる場合は、点数区分の名称
-   * （満貫・跳満・倍満・三倍満・役満・数え役満）を
-   * 「◯翻◯符」とは改行して分けて表示する。
-   */
   function renderRowHanFu(
     evaluated: EvaluatedHand
   ) {
@@ -419,16 +350,6 @@ function ScoreTable({
       );
   }
 
-  /*
-   * 役名の一覧を表示する。
-   *
-   * 役名1つ1つの途中では改行させたくない
-   * ため、役名単位で white-space: nowrap の
-   * span に包む。役名同士の区切り（「、」）は
-   * 通常のテキストのままにしておくことで、
-   * 幅が足りない時はその区切りの位置で
-   * 改行できるようにする。
-   */
   function renderYakuNames(
     names: string[]
   ) {
@@ -448,18 +369,6 @@ function ScoreTable({
     );
   }
 
-  /*
-   * ドラ・赤ドラ・裏ドラの内訳表示。
-   *
-   * アガリ牌自体がドラになることがあり
-   * 待ちによって枚数が変わるため、
-   * evaluateHand の結果（待ちごとに
-   * 計算済み）からそのまま組み立てる。
-   *
-   * 役満が成立している場合、ドラは点数に
-   * 影響しない（score.ts 側で han 計算に
-   * 含めていない）ため、表示上も数えない。
-   */
   function formatRowDoraBreakdown(
     evaluated: EvaluatedHand
   ): string {
@@ -499,15 +408,6 @@ function ScoreTable({
     return parts.join(" ");
   }
 
-  /*
-   * 「役」表内の1セル分の中身。
-   *
-   * 確定役以外の役名が無くても、ドラ・赤・裏の
-   * 内訳があるならそれだけ表示する
-   * （「なし」とドラ内訳が両方出て紛らわしく
-   * ならないようにする）。
-   * 役名もドラ内訳も無い場合だけ「なし」にする。
-   */
   function renderYakuCell(
     evaluated: EvaluatedHand
   ) {

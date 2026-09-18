@@ -184,14 +184,7 @@ function HandInput({
                 ];
 
               if (!meld) {
-                /*
-                 * 実際の副露枠と全く同じ
-                 * DOM構造にすることで、
-                 * ブラウザ・フォントの
-                 * 描画差で高さがズレない
-                 * ようにする（固定pxで
-                 * 高さを合わせない）。
-                 */
+
                 return (
                   <div
                     className="meld meld-placeholder"

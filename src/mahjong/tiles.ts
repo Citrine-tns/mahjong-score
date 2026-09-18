@@ -66,13 +66,6 @@ export function isRedTile(tile: Tile): boolean {
   );
 }
 
-/**
- * 牌の並び順を比較する。
- *
- * m → p → s → z
- * 同じ種類では数字順。
- * 5については通常5 → 赤5。
- */
 export function compareTiles(a: Tile, b: Tile): number {
   const baseA = getBaseTile(a);
   const baseB = getBaseTile(b);
@@ -101,7 +94,7 @@ export function compareTiles(a: Tile, b: Tile): number {
     return numberA - numberB;
   }
 
-  // 同じ5なら通常牌を先、赤牌を後。
+  // 同じ5なら通常牌を先、赤牌を後
   if (isRedTile(a) !== isRedTile(b)) {
     return isRedTile(a) ? 1 : -1;
   }
@@ -109,9 +102,6 @@ export function compareTiles(a: Tile, b: Tile): number {
   return 0;
 }
 
-/**
- * 牌配列を数字順に並べた新しい配列を返す。
- */
 export function sortTiles(tileList: Tile[]): Tile[] {
   return [...tileList].sort(compareTiles);
 }

@@ -39,33 +39,15 @@ function ceil100(
 
 type Limit = {
   base: number;
-  /*
-   * 満貫以上の場合の名称。
-   * 満貫未満（通常の翻符計算）の場合は null。
-   */
   name: string | null;
 };
 
-/**
- * 点数区分（満貫・跳満・倍満・三倍満・役満）の
- * 基本点と名称をまとめて求める。
- *
- * isYakuman は「実際に役満に該当する役があるか」
- * を表す。13翻に達していても役満の役が無く、
- * 通常役・ドラの積み上げだけで到達した場合は
- * 「数え役満」として区別する。
- */
 function getLimit(
   han: number,
   fu: number,
   kiriageMangan: boolean,
   isYakuman: boolean
 ): Limit {
-  /*
-   * 役満（複合による二倍役満・三倍役満…も
-   * 含む）。13翻ごとに役満1つ分（8000点）
-   * として数える。
-   */
   if (han >= 13) {
     return {
       base:
@@ -151,11 +133,6 @@ function getLimitBase(
   ).base;
 }
 
-/**
- * 満貫以上の場合の点数区分名
- * （満貫・跳満・倍満・三倍満・役満・数え役満）を
- * 返す。満貫未満なら null。
- */
 export function getLimitName(
   han: number,
   fu: number,
@@ -178,12 +155,6 @@ export function calculateScore(
   const dealer =
     isDealer(settings);
 
-  /*
-   * ここでは点数（base）だけが必要で、
-   * 「役満」か「数え役満」かの名称の
-   * 違いは点数に影響しないため、
-   * isYakuman はどちらでも構わない。
-   */
   const base =
     getLimitBase(
       han,
@@ -227,12 +198,6 @@ export function evaluateHand(
   winMethod: WinMethod,
   winningTile?: string
 ) {
-  /*
-   * 役だけを取得する。
-   *
-   * ドラ・裏ドラは役ではないため、
-   * getYaku() の返す yaku 配列には入れない。
-   */
   const yaku =
     getYaku(
       hand,
@@ -243,13 +208,6 @@ export function evaluateHand(
       winningTile
     );
 
-  /*
-   * ドラと裏ドラは役とは別に管理する。
-   *
-   * 通常ドラ・赤ドラ・裏ドラは、役名表示の
-   * 内訳（ドラ3 赤1 裏2 のような表記）に
-   * 使うため、内訳のまま持っておく。
-   */
   const doraBreakdown =
     getDoraBreakdown(
       hand,
@@ -269,11 +227,6 @@ export function evaluateHand(
   const uraDoraHan =
     doraBreakdown.ura;
 
-  /*
-   * 役による翻数だけを計算する。
-   *
-   * ここにはドラ・裏ドラを含めない。
-   */
   const yakuHan =
     yaku.reduce(
       (sum, current) =>
@@ -281,18 +234,6 @@ export function evaluateHand(
       0
     );
 
-  /*
-   * 実際の総翻数は
-   *
-   *   役 + ドラ + 裏ドラ
-   *
-   * となる。
-   *
-   * ただし役満が成立している場合、
-   * ドラ・裏ドラは点数に影響しない
-   * （役満の価値はドラでは上乗せされない）
-   * ため、役による翻数のみを使う。
-   */
   const han = hasYakuman(
     yaku
   )
@@ -309,23 +250,6 @@ export function evaluateHand(
       winMethod,
       winningTile
     );
-
-  /*
-   * ドラだけでは和了できない。
-   *
-   * 役が1つもない場合は無役なので、
-   * 点数計算を行わない。
-   *
-   * 例：
-   *
-   *   ロン
-   *   役 0
-   *   ドラ 3
-   *   → 無役
-   *
-   * 一方、門前清自摸和などの役がある場合は
-   * その役 + ドラで通常どおり点数計算する。
-   */
   const score =
     yakuHan === 0
       ? {

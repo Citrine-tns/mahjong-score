@@ -45,9 +45,6 @@ function getUsedCount(
 
   let count = 0;
 
-  /*
-   * 手牌
-   */
   for (const current of hand.concealed) {
     if (
       getBaseTile(current) ===
@@ -57,12 +54,6 @@ function getUsedCount(
     }
   }
 
-  /*
-   * 副露
-   *
-   * 現在入力対象になっている副露は
-   * いったん除外する。
-   */
   for (
     let i = 0;
     i < hand.melds.length;
@@ -88,9 +79,6 @@ function getUsedCount(
     }
   }
 
-  /*
-   * ドラ表示牌
-   */
   for (const indicator of settings.doraIndicators) {
     if (
       indicator &&
@@ -101,9 +89,6 @@ function getUsedCount(
     }
   }
 
-  /*
-   * 裏ドラ表示牌
-   */
   for (const indicator of settings.uraDoraIndicators) {
     if (
       indicator &&
@@ -114,10 +99,6 @@ function getUsedCount(
     }
   }
 
-  /*
-   * 現在入力対象になっている副露の牌を
-   * 使用枚数に戻す。
-   */
   if (
     inputTarget.type ===
     "meld"
@@ -183,9 +164,6 @@ function getSuit(
   return getBaseTile(tile)[1];
 }
 
-/*
- * 3枚の牌が順子を構成しているか判定する。
- */
 function isSequence(
   tile1: Tile,
   tile2: Tile,
@@ -200,9 +178,6 @@ function isSequence(
   const base3 =
     getBaseTile(tile3);
 
-  /*
-   * 字牌は順子にならない。
-   */
   if (
     getSuit(base1) === "z" ||
     getSuit(base2) === "z" ||
@@ -211,9 +186,6 @@ function isSequence(
     return false;
   }
 
-  /*
-   * 萬・筒・索が同じでなければ不可。
-   */
   if (
     getSuit(base1) !==
       getSuit(base2) ||
@@ -231,9 +203,6 @@ function isSequence(
     (a, b) => a - b
   );
 
-  /*
-   * 同じ牌が2枚あれば順子ではない。
-   */
   if (
     new Set(numbers).size !==
     3
@@ -249,20 +218,6 @@ function isSequence(
   );
 }
 
-/*
- * 指定した牌を含む、理論上の順子候補を取得する。
- *
- * 5p:
- *   3p 4p 5p
- *   4p 5p 6p
- *   5p 6p 7p
- *
- * 1p:
- *   1p 2p 3p
- *
- * 9p:
- *   7p 8p 9p
- */
 function getSequenceCandidates(
   tile: Tile
 ): Tile[][] {
@@ -275,9 +230,6 @@ function getSequenceCandidates(
   const number =
     getNumber(base);
 
-  /*
-   * 字牌は順子を作れない。
-   */
   if (
     suit === "z"
   ) {
@@ -287,13 +239,6 @@ function getSequenceCandidates(
   const candidates: Tile[][] =
     [];
 
-  /*
-   * 指定牌を含みうる順子の開始番号。
-   *
-   * 5なら3,4,5
-   * 1なら1のみ
-   * 9なら7のみ
-   */
   const possibleStarts = [
     number - 2,
     number - 1,
@@ -333,27 +278,6 @@ function getSequenceCandidates(
   return candidates;
 }
 
-/*
- * 現在の副露牌と候補牌を含めて、
- * 完成可能な順子が1つでも存在するか判定する。
- *
- * 重要:
- *
- * 「候補牌を含む順子がある」
- * だけではなく、
- *
- * 「現在すでに選択されている牌も
- * その同じ順子に含まれている」
- *
- * 必要がある。
- *
- * これによって、
- *
- * 5p + 1p
- *
- * のような無関係な牌の組み合わせを
- * 許可しない。
- */
 function canCompleteSequence(
   hand: Hand,
   settings: GameSettings,
@@ -364,10 +288,6 @@ function canCompleteSequence(
   const candidateBase =
     getBaseTile(candidate);
 
-  /*
-   * 現在の牌と候補牌の牌種が違えば
-   * 絶対に順子を作れない。
-   */
   for (
     const current of currentTiles
   ) {
@@ -387,24 +307,7 @@ function canCompleteSequence(
   for (
     const sequence of sequences
   ) {
-    /*
-     * 現在選択されている牌が
-     * この順子にすべて含まれているか確認。
-     *
-     * ここが重要。
-     *
-     * 例えば
-     *
-     * current = 5p
-     * candidate = 1p
-     *
-     * の場合、
-     *
-     * 1p 2p 3p
-     *
-     * には5pが含まれないので
-     * この候補は不成立。
-     */
+
     let containsCurrentTiles =
       true;
 
@@ -446,10 +349,6 @@ function canCompleteSequence(
       continue;
     }
 
-    /*
-     * 候補牌自身もその順子に
-     * 含まれていることを確認。
-     */
     const candidateIndex =
       sequenceRemaining.findIndex(
         (sequenceTile) =>
@@ -458,11 +357,6 @@ function canCompleteSequence(
           ) === candidateBase
       );
 
-    /*
-     * currentTiles で既に使われた牌を
-     * 引いた結果、候補牌が順子に存在しない
-     * 場合は不成立。
-     */
     if (
       candidateIndex === -1
     ) {
@@ -474,9 +368,6 @@ function canCompleteSequence(
       1
     );
 
-    /*
-     * 残りの牌が実際に残っているか確認。
-     */
     let possible = true;
 
     for (
@@ -505,36 +396,6 @@ function canCompleteSequence(
   return false;
 }
 
-/**
- * 副露に入れられる牌かを判定する。
- *
- * チー:
- *   0枚:
- *     字牌不可。
- *     その牌を含む順子が
- *     実際に完成可能な牌だけ。
- *
- *   1枚:
- *     現在の牌と候補牌を含む
- *     完成可能な順子があるものだけ。
- *
- *   2枚:
- *     3枚で実際に順子になるものだけ。
- *
- * ポン:
- *   0枚:
- *     残り2枚以上ある牌だけ。
- *
- *   1枚以上:
- *     現在の牌と同じ牌だけ。
- *
- * カン:
- *   0枚:
- *     4枚すべて残っている牌だけ。
- *
- *   1枚以上:
- *     現在の牌と同じ牌だけ。
- */
 function canSelectForMeld(
   hand: Hand,
   settings: GameSettings,
@@ -562,38 +423,20 @@ function canSelectForMeld(
       getBaseTile
     );
 
-  /*
-   * =========================
-   * 1枚目
-   * =========================
-   */
   if (
     currentTiles.length === 0
   ) {
-    /*
-     * チー
-     */
+
     if (
       meld.type === "chi"
     ) {
-      /*
-       * 字牌は1枚目から不可。
-       */
+
       if (
         getSuit(tile) === "z"
       ) {
         return false;
       }
 
-      /*
-       * その牌を含む順子が
-       * 実際に完成可能か確認する。
-       *
-       * 例:
-       * 1m → 2m/3m が必要
-       * 5p → 3p/4p/6p/7p が必要
-       * 9s → 7s/8s が必要
-       */
       return canCompleteSequence(
         hand,
         settings,
@@ -603,12 +446,6 @@ function canSelectForMeld(
       );
     }
 
-    /*
-     * ポン
-     *
-     * 1枚目を選ぶ時点で、
-     * 残り2枚以上必要。
-     */
     if (
       meld.type === "pon"
     ) {
@@ -622,12 +459,6 @@ function canSelectForMeld(
       );
     }
 
-    /*
-     * カン
-     *
-     * 1枚目を選ぶ時点で
-     * 4枚すべて残っている必要がある。
-     */
     if (
       meld.type === "kan_open" ||
       meld.type === "kan_closed" ||
@@ -671,9 +502,7 @@ function canSelectForMeld(
   if (
     meld.type === "chi"
   ) {
-    /*
-     * 3枚入っていたらこれ以上不可。
-     */
+
     if (
       currentTiles.length >=
       3
@@ -681,19 +510,12 @@ function canSelectForMeld(
       return false;
     }
 
-    /*
-     * 字牌は不可。
-     */
     if (
       getSuit(tile) === "z"
     ) {
       return false;
     }
 
-    /*
-     * 現在の牌と候補牌の
-     * 萬・筒・索が違えば不可。
-     */
     for (
       const current of currentTiles
     ) {
@@ -705,12 +527,6 @@ function canSelectForMeld(
       }
     }
 
-    /*
-     * 2枚目:
-     *
-     * 現在の1枚 + 候補1枚で
-     * 完成可能な順子が存在するか確認。
-     */
     if (
       currentTiles.length === 1
     ) {
@@ -723,11 +539,6 @@ function canSelectForMeld(
       );
     }
 
-    /*
-     * 3枚目:
-     *
-     * 3枚が実際に順子ならOK。
-     */
     if (
       currentTiles.length === 2
     ) {

@@ -315,12 +315,6 @@ function checkSanshoku(
   }
 }
 
-/**
- * 三色同刻。
- *
- * 同じ数字の萬子・筒子・索子の
- * 刻子または槓子が1組ずつある場合。
- */
 function checkSanshokuDoukou(
   decomposition: HandDecomposition,
   yaku: Yaku[]
@@ -581,15 +575,6 @@ function checkChanta(
   }
 }
 
-/**
- * 混老頭。
- *
- * 手牌のすべてが么九牌・字牌であり、
- * かつ「端牌」と「字牌」の両方を含む場合。
- *
- * 通常形では対々和と、
- * 七対子では七対子と複合する。
- */
 function checkHonroutou(
   decomposition: HandDecomposition,
   hand: Hand,
@@ -773,11 +758,6 @@ function checkSankantsu(
   }
 }
 
-/**
- * 四槓子。
- *
- * 4組すべてが槓子の場合。
- */
 function checkSuukantsu(
   decomposition: HandDecomposition,
   yaku: Yaku[]
@@ -942,23 +922,6 @@ function checkPinfu(
     return;
   }
 
-  /*
-   * 和了牌と同じ数字の牌が複数の面子に
-   * またがって存在する場合（例：
-   * 1234566789m の 3m 待ちでは、123m
-   * にも 345m にも 3m が含まれる）、
-   * 同じ牌は区別がつかないため
-   * どちらが和了牌かは一意に決まらない。
-   *
-   * その場合、どちらの解釈も面子の
-   * 分割自体は変えないため物理的に
-   * 矛盾なく成立する。したがって
-   * 候補をすべて列挙し、いずれかが
-   * 両面待ちとして成立するなら
-   * （最も得な解釈を採用するという
-   * 麻雀の一般的なルールに従い）
-   * 平和とする。
-   */
   const winningGroups =
     decomposition.groups.filter(
       (group) =>
@@ -1252,16 +1215,6 @@ function checkShousuushi(
   }
 }
 
-/**
- * 九蓮宝燈。
- *
- * 門前限定。
- *
- * 同一色で
- * 1112345678999
- * を基本形とし、
- * 同じ色の任意の1枚を加えた14枚。
- */
 function checkChuurenPoutou(
   hand: Hand,
   winningTile: Tile | undefined,
@@ -1403,14 +1356,6 @@ function checkSpecial(
   }
 }
 
-/**
- * 役満（複合役満を含む）が1つでも
- * 含まれているか。
- *
- * ScoreTable 側の集計でも、ある待ちの
- * 役が役満によって上書きされているかを
- * 判定するために使う。
- */
 export function hasYakuman(
   yaku: Yaku[]
 ): boolean {
@@ -1419,21 +1364,6 @@ export function hasYakuman(
   );
 }
 
-/**
- * 役満（複合役満を含む）が1つでもあれば、
- * それ以外の役は無視する。
- *
- * 四暗刻は対々和・三暗刻を、九蓮宝燈は
- * 清一色を、大四喜は小四喜を、といった
- * ように下位互換の役を含んでしまう場合や、
- * 一気通貫のように役満の手牌でもたまたま
- * 満たしてしまう役があるため、役満成立時は
- * それらを加算しないようにする。
- *
- * 役満どうしは複合しうる（大三元＋字一色 →
- * 二倍役満、など）ため、13翻以上の役は
- * すべて残す。
- */
 function applyYakumanPriority(
   yaku: Yaku[]
 ): Yaku[] {
@@ -1475,12 +1405,6 @@ export function getYaku(
     yaku
   );
 
-  /*
-   * 混老頭は通常形だけでなく、
-   * 七対子とも複合する。
-   *
-   * 国士無双には付けない。
-   */
   if (
     decomposition.specialType ===
     "chiitoitsu"
@@ -1493,9 +1417,6 @@ export function getYaku(
     );
   }
 
-  /*
-   * 九蓮宝燈は手牌そのものから判定する。
-   */
   if (
     !decomposition.specialType
   ) {

@@ -13,9 +13,6 @@ import {
   getAllTiles,
 } from "./hand";
 
-/**
- * 通常ドラ・裏ドラを数える。
- */
 function countDora(
   handTiles: Tile[],
   indicators: (
@@ -48,12 +45,6 @@ function countDora(
   return count;
 }
 
-/**
- * 赤ドラを数える。
- *
- * 0m / 0p / 0s はそれぞれ赤5として扱い、
- * 1枚につき1翻。
- */
 function countRedDora(
   handTiles: Tile[]
 ): number {
@@ -65,13 +56,6 @@ function countRedDora(
   ).length;
 }
 
-/**
- * 通常ドラ・赤ドラ・裏ドラを内訳で数える。
- *
- * アガリ牌自体がドラである場合も加味する
- * 必要があるため、待ち（winningTile）ごとに
- * 結果が変わりうる。
- */
 export type DoraBreakdown = {
   normal: number;
   red: number;

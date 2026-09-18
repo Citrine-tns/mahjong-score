@@ -61,6 +61,13 @@ const initialScoreOptions: ScoreOptions =
     chankan: false,
   };
 
+/*
+ * PC版と全く同じ比率のまま、画面幅に
+ * 合わせて全体を縮小表示するための
+ * 設計幅。.app の max-width と揃える。
+ */
+const DESIGN_WIDTH = 860;
+
 function App() {
   const leftColumnRef =
     useRef<HTMLDivElement>(
@@ -72,19 +79,24 @@ function App() {
       null
     );
 
+  const scaleOuterRef =
+    useRef<HTMLDivElement>(
+      null
+    );
+
+  const scaleInnerRef =
+    useRef<HTMLDivElement>(
+      null
+    );
+
   /*
-   * 左カラム（手牌+副露+ドラ表示牌）と
-   * 右カラム（牌選択）の高さを実測して
-   * 一致させる。
+   * 左カラム（手牌・ドラ表示牌）の高さに
+   * 右カラム（牌選択）の高さを合わせる。
    *
-   * CSSの数値合わせ（牌選択側の幅を
-   * 調整して高さを近づける）は、
-   * ブラウザ・OS・フォントによって
-   * select や button の描画高さが
-   * 変わるため、環境によってはズレる。
-   * 実際に描画された高さをJSで測って
-   * 直接反映すれば、どの環境でも
-   * ピクセル単位で一致する。
+   * offsetHeight は要素自身やその祖先に
+   * 掛かっている transform: scale() の
+   * 影響を受けないため、下の拡大縮小の
+   * 仕組みと組み合わせても正しく機能する。
    */
   useEffect(() => {
     const leftEl =
@@ -100,53 +112,11 @@ function App() {
       return;
     }
 
-    /*
-     * 2カラムレイアウトになる
-     * 画面幅（App.css の
-     * @media (max-width: 700px)
-     * と合わせる）でだけ高さを
-     * 強制する。狭い画面では
-     * 縦積みになるので、高さを
-     * 合わせる意味がない。
-     */
-    const mediaQuery =
-      window.matchMedia(
-        "(min-width: 701px)"
-      );
+    const SECTION_GAP = 30;
 
     const syncHeight = () => {
-      if (!mediaQuery.matches) {
-        if (
-          rightEl.style
-            .height !== ""
-        ) {
-          rightEl.style.height =
-            "";
-        }
-
-        return;
-      }
-
-      /*
-       * leftEl（.app-column-left）は
-       * flex item なので、最後の
-       * section が持つ margin-bottom
-       * （App.css の section{margin-bottom:30px}）
-       * も自身の高さに含んでしまう。
-       * これは「次のセクション（点数）
-       * との間隔」であって、右カラムの
-       * カード本体の高さではないので、
-       * 右側に渡す前に差し引く。
-       * 右側のカード（section）は自分の
-       * margin-bottom を普通に持っている
-       * ので、差し引いた分はそちらで
-       * 帳尻が合う。
-       */
-      const SECTION_GAP = 30;
-
       const nextHeight =
-        leftEl.getBoundingClientRect()
-          .height -
+        leftEl.offsetHeight -
         SECTION_GAP;
 
       const currentHeight =
@@ -155,16 +125,6 @@ function App() {
             .height
         ) || 0;
 
-      /*
-       * 値がほぼ変わっていない
-       * 場合は何もしない。
-       * （高さを書き換える→
-       * リフローが起きる→
-       * ResizeObserver が
-       * 反応する、を毎回
-       * 繰り返さないようにする
-       * ための安全弁）
-       */
       if (
         Math.abs(
           nextHeight -
@@ -188,18 +148,89 @@ function App() {
       leftEl
     );
 
-    mediaQuery.addEventListener(
-      "change",
-      syncHeight
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  /*
+   * レイアウトは常にPC版（DESIGN_WIDTH）の
+   * 幅で組んだ状態のまま、画面がそれより
+   * 狭い時だけ transform: scale() で全体を
+   * 縦横同じ比率で縮小する。
+   * ブレークポイントごとにレイアウトを
+   * 組み替えるのではなく、常にPC版と
+   * 全く同じ比率で1画面に収める方針。
+   */
+  useEffect(() => {
+    const outerEl =
+      scaleOuterRef.current;
+
+    const innerEl =
+      scaleInnerRef.current;
+
+    if (
+      !outerEl ||
+      !innerEl
+    ) {
+      return;
+    }
+
+    const applyScale = () => {
+      const scale = Math.min(
+        1,
+        outerEl.clientWidth /
+          DESIGN_WIDTH
+      );
+
+      const nextTransform = `scale(${scale})`;
+
+      if (
+        innerEl.style
+          .transform !==
+        nextTransform
+      ) {
+        innerEl.style.transform =
+          nextTransform;
+      }
+
+      const nextHeight =
+        innerEl.offsetHeight *
+        scale;
+
+      const currentHeight =
+        parseFloat(
+          outerEl.style
+            .height
+        ) || 0;
+
+      if (
+        Math.abs(
+          nextHeight -
+            currentHeight
+        ) >= 0.5
+      ) {
+        outerEl.style.height = `${nextHeight}px`;
+      }
+    };
+
+    applyScale();
+
+    const observer =
+      new ResizeObserver(
+        applyScale
+      );
+
+    observer.observe(
+      outerEl
+    );
+
+    observer.observe(
+      innerEl
     );
 
     return () => {
       observer.disconnect();
-
-      mediaQuery.removeEventListener(
-        "change",
-        syncHeight
-      );
     };
   }, []);
 
@@ -624,11 +655,8 @@ function App() {
       );
 
       /*
-       * 暗槓以外の副露になった場合、
-       * 立直・ダブル立直は成立しなくなるためOFFにする。
-       *
-       * 副露タイプ変更時は牌もリセットされるので、
-       * ここで現在の副露タイプを確認する。
+       * 暗槓以外の副露になった場合、立直・ダブル立直はOFF
+       * 副露タイプ変更時は牌もリセットされるので、現在の副露タイプを確認
        */
       if (
         type !== "kan_closed"
@@ -928,132 +956,142 @@ function App() {
   };
 
   return (
-    <div className="app">
-      <h1>
-        麻雀点数計算
-      </h1>
+    <div
+      className="scale-outer"
+      ref={scaleOuterRef}
+    >
+      <div
+        className="scale-inner"
+        ref={scaleInnerRef}
+      >
+        <div className="app">
+          <h1>
+            麻雀点数計算
+          </h1>
 
-      <Settings
-        settings={
-          settings
-        }
-        onChange={
-          setSettings
-        }
-      />
-
-      <div className="app-columns">
-        <div
-          className="app-column-left"
-          ref={leftColumnRef}
-        >
-          <HandInput
-            hand={hand}
-            concealedLimit={
-              concealedLimit
-            }
-            inputTarget={
-              inputTarget
-            }
-            onInputTargetChange={
-              setInputTarget
-            }
-            onRemoveConcealedTile={
-              removeConcealedTile
-            }
-            onRemoveMeldTile={
-              removeMeldTile
-            }
-            onChangeMeldType={
-              changeMeldType
-            }
-            onAddMeld={
-              addMeld
-            }
-            onRemoveMeld={
-              removeMeld
-            }
-            onClear={
-              clearAll
-            }
-          />
-
-          <DoraIndicators
+          <Settings
             settings={
               settings
             }
-            inputTarget={
-              inputTarget
-            }
-            onInputTargetChange={
-              setInputTarget
-            }
-            onRemoveDoraIndicator={
-              removeDoraIndicator
-            }
-            onRemoveUraDoraIndicator={
-              removeUraDoraIndicator
-            }
-            onClearDora={
-              clearDoraIndicators
+            onChange={
+              setSettings
             }
           />
-        </div>
-
-        <div
-          className="app-column-right"
-          ref={rightColumnRef}
-        >
-          <TileSelector
+    
+          <div className="app-columns">
+            <div
+              className="app-column-left"
+              ref={leftColumnRef}
+            >
+              <HandInput
+                hand={hand}
+                concealedLimit={
+                  concealedLimit
+                }
+                inputTarget={
+                  inputTarget
+                }
+                onInputTargetChange={
+                  setInputTarget
+                }
+                onRemoveConcealedTile={
+                  removeConcealedTile
+                }
+                onRemoveMeldTile={
+                  removeMeldTile
+                }
+                onChangeMeldType={
+                  changeMeldType
+                }
+                onAddMeld={
+                  addMeld
+                }
+                onRemoveMeld={
+                  removeMeld
+                }
+                onClear={
+                  clearAll
+                }
+              />
+    
+              <DoraIndicators
+                settings={
+                  settings
+                }
+                inputTarget={
+                  inputTarget
+                }
+                onInputTargetChange={
+                  setInputTarget
+                }
+                onRemoveDoraIndicator={
+                  removeDoraIndicator
+                }
+                onRemoveUraDoraIndicator={
+                  removeUraDoraIndicator
+                }
+                onClearDora={
+                  clearDoraIndicators
+                }
+              />
+            </div>
+    
+            <div
+              className="app-column-right"
+              ref={rightColumnRef}
+            >
+              <TileSelector
+                hand={hand}
+                settings={
+                  settings
+                }
+                inputTarget={
+                  inputTarget
+                }
+                onSelectTile={
+                  addTile
+                }
+              />
+            </div>
+          </div>
+    
+          <ScoreTable
             hand={hand}
             settings={
               settings
             }
-            inputTarget={
-              inputTarget
+            scoreOptions={
+              scoreOptions
             }
-            onSelectTile={
-              addTile
+            onScoreOptionsChange={
+              setScoreOptions
+            }
+            onRiichiChange={
+              (checked) =>
+                setRiichiState(
+                  checked
+                    ? "riichi"
+                    : "off"
+                )
+            }
+            onDoubleRiichiChange={
+              (checked) =>
+                setRiichiState(
+                  checked
+                    ? "double"
+                    : "off"
+                )
+            }
+            canRiichi={
+              hand.melds.every(
+                (meld) =>
+                  meld.type ===
+                  "kan_closed"
+              )
             }
           />
         </div>
       </div>
-
-      <ScoreTable
-        hand={hand}
-        settings={
-          settings
-        }
-        scoreOptions={
-          scoreOptions
-        }
-        onScoreOptionsChange={
-          setScoreOptions
-        }
-        onRiichiChange={
-          (checked) =>
-            setRiichiState(
-              checked
-                ? "riichi"
-                : "off"
-            )
-        }
-        onDoubleRiichiChange={
-          (checked) =>
-            setRiichiState(
-              checked
-                ? "double"
-                : "off"
-            )
-        }
-        canRiichi={
-          hand.melds.every(
-            (meld) =>
-              meld.type ===
-              "kan_closed"
-          )
-        }
-      />
     </div>
   );
 }

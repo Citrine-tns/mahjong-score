@@ -77,11 +77,6 @@ export function calculateFu(
     return 25;
   }
 
-  /*
-   * 国士無双は通常の面子・雀頭による符計算が
-   * 成立しないため、慣例的に30符固定とする
-   * （役満のため点数計算上は符を使わない）。
-   */
   if (
     decomposition.specialType ===
     "kokushi"
@@ -148,13 +143,6 @@ export function calculateFu(
 
   // 面子
   for (const group of decomposition.groups) {
-    /*
-     * 未入力の副露など、牌が存在しないグループは
-     * 符計算の対象にしない。
-     *
-     * 通常は waits.ts で計算自体を止めているが、
-     * ここでも防御しておく。
-     */
     if (
       group.tiles.length === 0
     ) {
@@ -280,11 +268,6 @@ export function calculateFu(
     }
   }
 
-  // ツモ2符
-  //
-  // 平和ツモは0符だが、
-  // ここでは後段で処理しやすいよう
-  // 門前平和を20符として扱う。
   if (
     winMethod === "tsumo"
   ) {

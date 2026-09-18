@@ -17,9 +17,6 @@ import {
   getSuit,
 } from "./hand";
 
-/**
- * 副露を内部の面子形式へ変換する。
- */
 function fixedMeldToGroup(
   meld: Meld
 ): HandGroup {
@@ -47,9 +44,6 @@ function fixedMeldToGroup(
   };
 }
 
-/**
- * 副露部分を内部形式へ変換する。
- */
 function getFixedGroups(
   hand: Hand
 ): HandGroup[] {
@@ -58,10 +52,6 @@ function getFixedGroups(
   );
 }
 
-/**
- * 牌を m -> p -> s -> z、
- * その中では数字順に並べる。
- */
 function sortBaseTiles(
   tiles: string[]
 ): string[] {
@@ -93,10 +83,6 @@ function sortBaseTiles(
   );
 }
 
-/**
- * 現在残っている牌の中から、
- * 最も小さい牌を1枚取得する。
- */
 function getFirstRemainingTile(
   counts: Record<string, number>
 ): string | null {
@@ -117,14 +103,6 @@ function getFirstRemainingTile(
   )[0];
 }
 
-/**
- * 通常形の和了形を全探索する。
- *
- * 雀頭 + 4面子
- *
- * 副露部分はすでに固定された面子として扱い、
- * 門前部分について残りの面子をバックトラックで探索する。
- */
 function searchStandardDecompositions(
   concealedTiles: Tile[],
   fixedGroups: HandGroup[]
@@ -140,9 +118,6 @@ function searchStandardDecompositions(
   const requiredGroups =
     4 - fixedGroups.length;
 
-  /*
-   * 雀頭候補をすべて試す。
-   */
   const pairCandidates =
     sortBaseTiles(
       Object.keys(
@@ -160,10 +135,6 @@ function searchStandardDecompositions(
       continue;
     }
 
-    /*
-     * 雀頭を取り除いた状態から
-     * 面子を探索する。
-     */
     const counts = {
       ...initialCounts,
     };
@@ -185,12 +156,6 @@ function searchStandardDecompositions(
   );
 }
 
-/**
- * 残り牌から面子をバックトラックで探索する。
- *
- * 各分岐では牌カウントをコピーするため、
- * ある探索結果が別の探索分岐へ影響しない。
- */
 function searchGroups(
   counts: Record<string, number>,
   currentGroups: HandGroup[],
@@ -199,9 +164,6 @@ function searchGroups(
   fixedGroups: HandGroup[],
   result: HandDecomposition[]
 ): void {
-  /*
-   * 必要な面子数を超えた場合は失敗。
-   */
   if (
     currentGroups.length >
     requiredGroups
@@ -209,12 +171,6 @@ function searchGroups(
     return;
   }
 
-  /*
-   * 残り牌がない場合。
-   *
-   * 必要な面子数をちょうど作れていれば
-   * 正しい通常形。
-   */
   const first =
     getFirstRemainingTile(
       counts
@@ -241,10 +197,6 @@ function searchGroups(
     return;
   }
 
-  /*
-   * まだ必要な面子があるのに
-   * 面子数を使い切っていたら失敗。
-   */
   if (
     currentGroups.length >=
     requiredGroups
@@ -259,9 +211,6 @@ function searchGroups(
    * ------------------------------------------------
    * 刻子
    * ------------------------------------------------
-   *
-   * first が3枚以上あれば、
-   * first-first-first の刻子を試す。
    */
   if (count >= 3) {
     const nextCounts = {
@@ -296,10 +245,6 @@ function searchGroups(
    * ------------------------------------------------
    * 順子
    * ------------------------------------------------
-   *
-   * 数牌の場合、
-   * first, first+1, first+2
-   * が揃っていれば順子を試す。
    */
   const suit =
     getSuit(first);
@@ -353,9 +298,6 @@ function searchGroups(
   }
 }
 
-/**
- * 同じ分解が重複して入った場合に削除する。
- */
 function deduplicateDecompositions(
   decompositions: HandDecomposition[]
 ): HandDecomposition[] {
@@ -405,15 +347,12 @@ function deduplicateDecompositions(
 }
 
 /**
- * 七対子判定。
+ * 七対子判定
  */
 function getChiitoitsu(
   hand: Hand,
   winningTile?: Tile
 ): HandDecomposition[] {
-  /*
-   * 七対子は副露できない。
-   */
   if (
     hand.melds.length > 0
   ) {
@@ -430,9 +369,6 @@ function getChiitoitsu(
     );
   }
 
-  /*
-   * 七対子は14枚。
-   */
   if (
     tiles.length !== 14
   ) {
@@ -445,10 +381,6 @@ function getChiitoitsu(
   const countEntries =
     Object.entries(counts);
 
-  /*
-   * 異なる牌が7種類、
-   * それぞれ2枚。
-   */
   if (
     countEntries.length !== 7 ||
     countEntries.some(
@@ -470,15 +402,12 @@ function getChiitoitsu(
 }
 
 /**
- * 国士無双判定。
+ * 国士無双判定
  */
 function getKokushi(
   hand: Hand,
   winningTile?: Tile
 ): HandDecomposition[] {
-  /*
-   * 国士無双は副露できない。
-   */
   if (
     hand.melds.length > 0
   ) {
@@ -495,9 +424,6 @@ function getKokushi(
     );
   }
 
-  /*
-   * 国士無双は14枚。
-   */
   if (
     tiles.length !== 14
   ) {
@@ -523,9 +449,6 @@ function getKokushi(
   const counts =
     createTileCounts(tiles);
 
-  /*
-   * 十三種すべてを1枚以上持っていること。
-   */
   for (
     const tile of required
   ) {
@@ -537,9 +460,6 @@ function getKokushi(
     }
   }
 
-  /*
-   * 十三種すべてが存在すること。
-   */
   const uniqueCount =
     required.filter(
       (tile) =>
@@ -553,9 +473,6 @@ function getKokushi(
     return [];
   }
 
-  /*
-   * いずれか1種類が2枚以上あれば雀頭。
-   */
   const pairExists =
     required.some(
       (tile) =>
@@ -577,10 +494,6 @@ function getKokushi(
   ];
 }
 
-/**
- * 手牌が和了形になっているか、
- * また可能な全分解を返す。
- */
 export function getHandDecompositions(
   hand: Hand,
   winningTile?: Tile
@@ -629,17 +542,6 @@ export function getHandDecompositions(
    * ----------------------------------------
    * 通常形
    * ----------------------------------------
-   *
-   * 副露1つにつき、
-   * 門前部分に必要な牌は3枚減る。
-   *
-   * 例:
-   *   暗槓1つ
-   *   14 - 3 = 11枚
-   *
-   * 暗槓そのものは4枚だが、
-   * 手牌構造上は1面子として3枚分を
-   * 門前部分から差し引く。
    */
   const expectedConcealed =
     14 -
@@ -660,9 +562,6 @@ export function getHandDecompositions(
   return result;
 }
 
-/**
- * 手牌が和了形か判定する。
- */
 export function isAgari(
   hand: Hand,
   winningTile?: Tile

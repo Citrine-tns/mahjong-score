@@ -6,13 +6,8 @@
   box-sizing: border-box;
 }
 
-/*
- * 牌画像は 66x90 なので、牌を表示する
- * 枠はこの比率に合わせる。縦横比が
- * ずれると object-fit: contain が
- * 余白を作り、牌同士の間に隙間が
- * あるように見えてしまう。
- */
+/* 牌画像は 66x90 */
+
 :root {
   --tile-height: 46px;
   --tile-width: calc(
@@ -20,20 +15,6 @@
   );
 }
 
-/*
- * スクロールバーの表示・非表示で
- * ページの横幅が変わらないように
- * 常にスクロールバー分の余白を
- * 確保しておく。
- *
- * これが無いと、右カラムの高さが
- * 伸びてページに縦スクロールバーが
- * 出た時に横幅が減り、それによって
- * 左カラムの折り返しが変わって
- * 高さが変化し、また右カラムの高さを
- * 再計算…という無限ループに近い
- * 挙動を起こす原因になる。
- */
 html {
   scrollbar-gutter: stable;
 }
@@ -68,13 +49,6 @@ button:disabled {
   text-align: center;
 }
 
-/*
- * 手牌・副露・ドラ表示牌（左）と
- * 牌選択（右）を横並びにし、入力中に
- * 縦スクロールで行き来しなくて済むように
- * する。牌選択は左側より縦に長くなる
- * ことが多いので、sticky で追従させる。
- */
 .app-columns {
   display: flex;
   align-items: flex-start;
@@ -87,38 +61,11 @@ button:disabled {
 }
 
 .app-column-right {
-  /*
-   * 牌選択側は牌サイズを固定して
-   * いないので、この幅を狭めれば
-   * 牌選択の牌が縮み、ページ全体の
-   * 縮小につながる。
-   */
   flex: 0 0 300px;
   min-width: 0;
-
-  /*
-   * 高さは App.tsx 側で左カラムの
-   * 実測値をJSで直接反映している
-   * （ブラウザ・OSによる描画差の
-   * 影響を受けないようにするため）。
-   * ぴったり合っている前提なので、
-   * サブピクセル単位の端数で
-   * スクロールバーが出ないよう
-   * auto ではなく hidden にする
-   * （万一はみ出しても静かに
-   * クリップするだけにする）。
-   */
   overflow-y: hidden;
 }
 
-/*
- * .app-column-right の高さはJSで
- * 強制されるが、中の <section>（見た目の
- * カード）はそのままだと自分の中身の
- * 高さにしかならない。カードの下端も
- * ちゃんと揃うように、親の高さいっぱいに
- * 広げる。
- */
 .app-column-right > section {
   height: 100%;
 }
@@ -134,11 +81,6 @@ h1 {
   margin-bottom: 30px;
 }
 
-/*
- * ブラウザデフォルトの h2/h3 font-size は
- * ブラウザによって微妙に違うため、両方
- * 明示的に同じ値を指定して確実に揃える。
- */
 h2,
 h3 {
   font-size: 18px;
@@ -187,21 +129,6 @@ p {
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
 }
 
-/*
- * 手牌は最大13枚なので、13枚分の
- * 牌がちょうど収まる幅で固定する
- * （.hand の padding 5px×2 と
- * border 4px×2 を足した分が +18px）。
- * こうすることで、牌の増減によって
- * 枠の大きさが変わらないようにする。
- */
-/*
- * ドラ表示牌は常に5枠なので、その分の
- * 幅にぴったり合わせる（裏ドラ表示牌は
- * 枚数が可変なので、DoraIndicators.tsx
- * 側でインラインスタイルとして同じ式を
- * 個別に指定している）。
- */
 .hand--dora {
   max-width: calc(
     var(--tile-width) * 5 +
@@ -244,12 +171,6 @@ p {
   gap: 12px;
 }
 
-/*
- * 1行あたり常に5枚に揃える。
- * コンテナ幅に応じて牌の方が
- * 伸び縮みする（折り返し位置が
- * 幅によってバラバラにならない）。
- */
 .tile-group {
   display: grid;
   grid-template-columns: repeat(
@@ -319,11 +240,6 @@ p {
   margin-top: 16px;
 }
 
-/*
- * 「副露」見出しは h2 の margin-bottom
- * を共有すると「手牌」見出しにも影響する
- * ため、ここだけ個別に上書きする。
- */
 .meld-section h2 {
   margin-bottom: 4px;
 }
@@ -336,12 +252,6 @@ p {
   margin-bottom: 12px;
 }
 
-/*
- * 副露は2枠ずつ改行する。枠の幅は
- * 1fr で引き伸ばすのではなく、牌4枚
- * （槓子）分ぴったりの幅にして、
- * 余白ができないようにする。
- */
 .meld-list {
   display: grid;
   grid-template-columns: repeat(
@@ -368,11 +278,6 @@ p {
   cursor: pointer;
 }
 
-/*
- * 副露を追加する前から、4枠分の
- * 大きさをあらかじめ確保しておく
- * ための空枠。
- */
 .meld-placeholder {
   border-style: dashed;
   background: transparent;
@@ -385,13 +290,6 @@ p {
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
 }
 
-/*
- * 枠が牌4枚ぴったりの幅なので、
- * 種類選択・枚数・削除ボタンは
- * 1行に収まらない。種類選択を
- * 1行目、枚数と削除ボタンを
- * 2行目に折り返す。
- */
 .meld-header {
   display: flex;
   flex-wrap: wrap;
@@ -426,10 +324,7 @@ p {
   min-height: var(--tile-height);
 }
 
-/*
- * 手牌・ドラ表示牌と同じ牌サイズに
- * 統一する。
- */
+
 .meld-tile,
 .meld-tile-placeholder {
   width: var(--tile-width);
@@ -470,13 +365,6 @@ p {
 }
 
 .indicator-panel {
-  /*
-   * 枠の大きさは中の牌の枚数（.hand
-   * 側の max-width）にちょうど合わせる。
-   * flex:1 のような共有幅にすると、
-   * 牌の実際の枚数と枠の大きさが
-   * 合わなくなる。
-   */
   flex: 0 0 auto;
   min-width: 0;
 }
@@ -507,10 +395,6 @@ p {
   background: #fafafa;
 }
 
-/*
- * 対応する表ドラがまだ無い裏ドラ枠。
- * 幅は確保しつつ見た目は消す。
- */
 .tile-placeholder--hidden {
   visibility: hidden;
 }
@@ -633,10 +517,7 @@ p {
   cursor: not-allowed;
 }
 
-/*
- * 確定役（待ちによらず必ずつく役）の
- * ラベルだけバッジ風にして目立たせる。
- */
+/* 確定役 */
 .score-guaranteed-yaku {
   display: flex;
   align-items: center;
@@ -682,35 +563,49 @@ td img {
   margin: 0 auto;
 }
 
-/* 狭い画面 */
+/*
+ * 狭い画面での表示。
+ *
+ * ブレークポイントごとにレイアウトを
+ * 組み替えるのではなく、常にPC版
+ * （DESIGN_WIDTH＝.app の max-width）と
+ * 全く同じ比率のまま、画面幅に収まるように
+ * transform: scale() で縮小する
+ * （App.tsx 側でJSにより実現）。
+ *
+ * .scale-inner の幅は常にPC版の幅のまま
+ * 固定し、その内部のレイアウトは画面幅に
+ * 一切左右されない。
+ */
+/*
+ * margin: 0 auto ではなく flex + justify-content
+ * で中央寄せする。.scale-inner の幅
+ * （860px）が親（画面幅）より大きい場合、
+ * ブロック要素の auto マージンは
+ * 「収まりきらない時は0扱い」という
+ * CSSの仕様があり左端に寄ってしまうが、
+ * flexの中央寄せは左右均等にはみ出させて
+ * くれるため、常に正しく中央に保てる。
+ */
+.scale-outer {
+  display: flex;
+  justify-content: center;
+  /*
+   * align-items のデフォルト(stretch)だと
+   * .scale-inner の高さがこの
+   * .scale-outer の高さ（JSで設定した
+   * 縮小後の高さ）に引き伸ばされてしまい、
+   * 「.scale-inner の自然な高さを測って
+   * .scale-outer の高さを決める」という
+   * JS側の計算が循環して壊れる。
+   */
+  align-items: flex-start;
 
-@media (max-width: 700px) {
-  .app {
-    padding: 15px;
-  }
+  width: 100%;
+  overflow-x: hidden;
+}
 
-  section {
-    padding: 15px;
-  }
-
-  .score-chance-yaku {
-    justify-content: flex-start;
-  }
-
-  .indicator-panels {
-    flex-direction: column;
-  }
-
-  .indicator-panel {
-    flex: 0 0 auto;
-  }
-
-  .app-columns {
-    flex-direction: column;
-  }
-
-  .app-column-right {
-    flex: 0 0 auto;
-    width: 100%;
-  }
+.scale-inner {
+  flex: 0 0 860px;
+  transform-origin: top center;
 }
