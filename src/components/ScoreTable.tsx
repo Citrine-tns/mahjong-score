@@ -353,17 +353,27 @@ function ScoreTable({
   function renderYakuNames(
     names: string[]
   ) {
+    /*
+     * 区切りの「、」は次の役名の前ではなく
+     * 前の役名の末尾に含める。
+     * 「、」を次の役名の前（別ノード）に
+     * 置くと、折り返しが起きた時に「、」が
+     * 行頭に来てしまい（禁則処理違反で
+     * 見た目が気持ち悪い）、行末に来る
+     * べき句読点が浮いてしまう。
+     */
     return names.map(
       (name, index) => (
-        <span key={name}>
-          {index > 0 && "、"}
-          <span
-            style={{
-              whiteSpace: "nowrap",
-            }}
-          >
-            {name}
-          </span>
+        <span
+          key={name}
+          style={{
+            whiteSpace: "nowrap",
+          }}
+        >
+          {name}
+          {index <
+            names.length - 1 &&
+            "、"}
         </span>
       )
     );
@@ -421,11 +431,23 @@ function ScoreTable({
         evaluated
       );
 
+    /*
+     * この分岐に来る時点で
+     * evaluated.yaku.length > 0
+     * （無役なら呼び出し側の「無役」表示が
+     * 先に処理される）。それでいて
+     * names（確定役を除いた役名）が空
+     * ということは、この待ちの役は
+     * 確定役だけで構成されている
+     * （待ちによらず変わらない）ということ。
+     * 確定役は表の外側にまとめて出して
+     * いるので、ここは空欄にする。
+     */
     if (
       names.length === 0 &&
       doraText === ""
     ) {
-      return "なし";
+      return "";
     }
 
     return (

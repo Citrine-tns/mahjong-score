@@ -156,15 +156,6 @@ function DoraIndicators({
               MAX_DORA_INDICATORS
             } 枚
           </p>
-
-          <button
-            className="hand-clear"
-            onClick={
-              onClearDora
-            }
-          >
-            クリア
-          </button>
         </div>
 
         {riichiActive && (
@@ -268,6 +259,13 @@ function DoraIndicators({
           </div>
         )}
       </div>
+
+      <button
+        className="hand-clear"
+        onClick={onClearDora}
+      >
+        クリア
+      </button>
     </section>
   );
 }
