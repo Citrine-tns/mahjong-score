@@ -42,6 +42,36 @@ type Limit = {
   name: string | null;
 };
 
+/*
+ * 役満が複合して重なった場合の名称。
+ * 二倍役満・三倍役満…という表記に
+ * するため、倍数ごとの名称を用意する
+ * （それ以上の倍数は「N倍役満」に
+ * フォールバックする）。
+ */
+const YAKUMAN_MULTIPLIER_NAMES: Record<
+  number,
+  string
+> = {
+  1: "役満",
+  2: "二倍役満",
+  3: "三倍役満",
+  4: "四倍役満",
+  5: "五倍役満",
+  6: "六倍役満",
+};
+
+function getYakumanName(
+  multiplier: number
+): string {
+  return (
+    YAKUMAN_MULTIPLIER_NAMES[
+      multiplier
+    ] ??
+    `${multiplier}倍役満`
+  );
+}
+
 function getLimit(
   han: number,
   fu: number,
@@ -49,13 +79,36 @@ function getLimit(
   isYakuman: boolean
 ): Limit {
   if (han >= 13) {
+    /*
+     * 数え役満（役満に該当する役は
+     * 無いが、通常役・ドラの積み上げで
+     * 13翻以上に達した場合）は、翻数の
+     * 表示はそのまま増やしてよいが、
+     * 点数は翻数に関わらず通常の役満
+     * 1つ分で固定する
+     * （26翻・39翻などに達しても
+     * 二倍・三倍にはしない）。
+     *
+     * 実際に役満の役がある場合のみ、
+     * 13翻ごとに複合役満として
+     * 点数・名称ともに倍化する。
+     */
+    if (!isYakuman) {
+      return {
+        base: 8000,
+        name: "数え役満",
+      };
+    }
+
+    const multiplier =
+      Math.floor(han / 13);
+
     return {
       base:
-        8000 *
-        Math.floor(han / 13),
-      name: isYakuman
-        ? "役満"
-        : "数え役満",
+        8000 * multiplier,
+      name: getYakumanName(
+        multiplier
+      ),
     };
   }
 

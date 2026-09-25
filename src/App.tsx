@@ -1034,6 +1034,32 @@ function App() {
         });
       }
     }
+
+    /*
+     * ダブル立直は1巡目の打牌でしか
+     * 成立せず、一発は必然的に序盤の
+     * 和了になる。海底摸月・河底撈魚は
+     * 牌山最後の1枚での和了＝終盤なので、
+     * ダブル立直に切り替えた時点で
+     * 一発と両立していたら、
+     * 海底摸月・河底撈魚の方を外す。
+     */
+    if (
+      state === "double"
+    ) {
+      setScoreOptions(
+        (current) =>
+          current.ippatsu &&
+          (current.haitei ||
+            current.houtei)
+            ? {
+                ...current,
+                haitei: false,
+                houtei: false,
+              }
+            : current
+      );
+    }
   };
 
   return (

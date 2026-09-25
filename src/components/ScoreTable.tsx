@@ -152,6 +152,33 @@ function ScoreTable({
     settings.riichi ||
     settings.doubleRiichi;
 
+  /*
+   * ダブル立直は1巡目の打牌でしか
+   * 成立しないため、一発（立直後すぐの
+   * 和了）は必然的にゲーム序盤の和了になる。
+   * 海底摸月・河底撈魚は牌山最後の1枚
+   * での和了＝ゲーム終盤なので、
+   * ダブル立直が絡む一発とは絶対に
+   * 両立しない。
+   *
+   * 通常の立直（ダブルでない）は
+   * いつ宣言したか分からないため
+   * （終盤に立直した直後の一発、も
+   * あり得る）、この排他は
+   * ダブル立直の時だけ適用する。
+   */
+  const ippatsuHaiteiConflict =
+    settings.doubleRiichi;
+
+  const ippatsuDisabledByHaitei =
+    ippatsuHaiteiConflict &&
+    (scoreOptions.haitei ||
+      scoreOptions.houtei);
+
+  const haiteiHouteiDisabledByIppatsu =
+    ippatsuHaiteiConflict &&
+    scoreOptions.ippatsu;
+
   const ronDisabled =
     scoreOptions.haitei ||
     scoreOptions.rinshan;
@@ -537,7 +564,8 @@ function ScoreTable({
 
         <label
           className={`score-chance-yaku-item ${
-            !riichiActive
+            !riichiActive ||
+            ippatsuDisabledByHaitei
               ? "is-disabled"
               : ""
           }`}
@@ -552,7 +580,8 @@ function ScoreTable({
               scoreOptions.ippatsu
             }
             disabled={
-              !riichiActive
+              !riichiActive ||
+              ippatsuDisabledByHaitei
             }
             onChange={(e) => {
               const checked =
@@ -575,7 +604,13 @@ function ScoreTable({
           />
         </label>
 
-        <label className="score-chance-yaku-item">
+        <label
+          className={`score-chance-yaku-item ${
+            haiteiHouteiDisabledByIppatsu
+              ? "is-disabled"
+              : ""
+          }`}
+        >
           <span>
             海底摸月
           </span>
@@ -584,6 +619,9 @@ function ScoreTable({
             type="checkbox"
             checked={
               scoreOptions.haitei
+            }
+            disabled={
+              haiteiHouteiDisabledByIppatsu
             }
             onChange={(e) => {
               const checked =
@@ -610,7 +648,13 @@ function ScoreTable({
           />
         </label>
 
-        <label className="score-chance-yaku-item">
+        <label
+          className={`score-chance-yaku-item ${
+            haiteiHouteiDisabledByIppatsu
+              ? "is-disabled"
+              : ""
+          }`}
+        >
           <span>
             河底撈魚
           </span>
@@ -619,6 +663,9 @@ function ScoreTable({
             type="checkbox"
             checked={
               scoreOptions.houtei
+            }
+            disabled={
+              haiteiHouteiDisabledByIppatsu
             }
             onChange={(e) => {
               const checked =
