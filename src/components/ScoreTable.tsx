@@ -1,4 +1,7 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import type {
   GameSettings,
@@ -166,18 +169,52 @@ function ScoreTable({
    * （終盤に立直した直後の一発、も
    * あり得る）、この排他は
    * ダブル立直の時だけ適用する。
+   *
+   * グレーアウトはせず、一発と
+   * 海底摸月/河底撈魚のどちらかを
+   * チェックしたら、他の偶発役同士と
+   * 同じように、もう片方を自動でOFFに
+   * する。
    */
   const ippatsuHaiteiConflict =
     settings.doubleRiichi;
 
-  const ippatsuDisabledByHaitei =
-    ippatsuHaiteiConflict &&
-    (scoreOptions.haitei ||
-      scoreOptions.houtei);
+  /*
+   * 嶺上開花は槓をした副露が無いと
+   * そもそも成立しない。明槓・暗槓・
+   * 加槓のどれでも良い。
+   */
+  const hasKanMeld =
+    hand.melds.some(
+      (meld) =>
+        meld.type ===
+          "kan_open" ||
+        meld.type ===
+          "kan_closed" ||
+        meld.type ===
+          "kan_added"
+    );
 
-  const haiteiHouteiDisabledByIppatsu =
-    ippatsuHaiteiConflict &&
-    scoreOptions.ippatsu;
+  /*
+   * 槓の副露を消してしまった後も
+   * 嶺上開花がチェックされたまま
+   * 残らないようにする。
+   */
+  useEffect(() => {
+    if (
+      !hasKanMeld &&
+      scoreOptions.rinshan
+    ) {
+      onScoreOptionsChange({
+        ...scoreOptions,
+        rinshan: false,
+      });
+    }
+  }, [
+    hasKanMeld,
+    scoreOptions,
+    onScoreOptionsChange,
+  ]);
 
   const ronDisabled =
     scoreOptions.haitei ||
@@ -564,8 +601,7 @@ function ScoreTable({
 
         <label
           className={`score-chance-yaku-item ${
-            !riichiActive ||
-            ippatsuDisabledByHaitei
+            !riichiActive
               ? "is-disabled"
               : ""
           }`}
@@ -580,12 +616,15 @@ function ScoreTable({
               scoreOptions.ippatsu
             }
             disabled={
-              !riichiActive ||
-              ippatsuDisabledByHaitei
+              !riichiActive
             }
             onChange={(e) => {
               const checked =
                 e.target.checked;
+
+              const clearsHaiteiHoutei =
+                checked &&
+                ippatsuHaiteiConflict;
 
               onScoreOptionsChange({
                 ...scoreOptions,
@@ -599,18 +638,20 @@ function ScoreTable({
                   checked
                     ? false
                     : scoreOptions.chankan,
+                haitei:
+                  clearsHaiteiHoutei
+                    ? false
+                    : scoreOptions.haitei,
+                houtei:
+                  clearsHaiteiHoutei
+                    ? false
+                    : scoreOptions.houtei,
               });
             }}
           />
         </label>
 
-        <label
-          className={`score-chance-yaku-item ${
-            haiteiHouteiDisabledByIppatsu
-              ? "is-disabled"
-              : ""
-          }`}
-        >
+        <label className="score-chance-yaku-item">
           <span>
             海底摸月
           </span>
@@ -620,12 +661,13 @@ function ScoreTable({
             checked={
               scoreOptions.haitei
             }
-            disabled={
-              haiteiHouteiDisabledByIppatsu
-            }
             onChange={(e) => {
               const checked =
                 e.target.checked;
+
+              const clearsIppatsu =
+                checked &&
+                ippatsuHaiteiConflict;
 
               onScoreOptionsChange({
                 ...scoreOptions,
@@ -643,18 +685,16 @@ function ScoreTable({
                   checked
                     ? false
                     : scoreOptions.chankan,
+                ippatsu:
+                  clearsIppatsu
+                    ? false
+                    : scoreOptions.ippatsu,
               });
             }}
           />
         </label>
 
-        <label
-          className={`score-chance-yaku-item ${
-            haiteiHouteiDisabledByIppatsu
-              ? "is-disabled"
-              : ""
-          }`}
-        >
+        <label className="score-chance-yaku-item">
           <span>
             河底撈魚
           </span>
@@ -664,12 +704,13 @@ function ScoreTable({
             checked={
               scoreOptions.houtei
             }
-            disabled={
-              haiteiHouteiDisabledByIppatsu
-            }
             onChange={(e) => {
               const checked =
                 e.target.checked;
+
+              const clearsIppatsu =
+                checked &&
+                ippatsuHaiteiConflict;
 
               onScoreOptionsChange({
                 ...scoreOptions,
@@ -687,12 +728,22 @@ function ScoreTable({
                   checked
                     ? false
                     : scoreOptions.chankan,
+                ippatsu:
+                  clearsIppatsu
+                    ? false
+                    : scoreOptions.ippatsu,
               });
             }}
           />
         </label>
 
-        <label className="score-chance-yaku-item">
+        <label
+          className={`score-chance-yaku-item ${
+            !hasKanMeld
+              ? "is-disabled"
+              : ""
+          }`}
+        >
           <span>
             嶺上開花
           </span>
@@ -701,6 +752,9 @@ function ScoreTable({
             type="checkbox"
             checked={
               scoreOptions.rinshan
+            }
+            disabled={
+              !hasKanMeld
             }
             onChange={(e) => {
               const checked =
