@@ -76,27 +76,49 @@ function getLimit(
   han: number,
   fu: number,
   kiriageMangan: boolean,
-  isYakuman: boolean
+  isYakuman: boolean,
+  countedYakuman: boolean,
+  compoundYakuman: boolean
 ): Limit {
   if (han >= 13) {
     /*
      * 数え役満（役満に該当する役は
      * 無いが、通常役・ドラの積み上げで
-     * 13翻以上に達した場合）は、翻数の
-     * 表示はそのまま増やしてよいが、
-     * 点数は翻数に関わらず通常の役満
-     * 1つ分で固定する
-     * （26翻・39翻などに達しても
-     * 二倍・三倍にはしない）。
-     *
-     * 実際に役満の役がある場合のみ、
-     * 13翻ごとに複合役満として
-     * 点数・名称ともに倍化する。
+     * 13翻以上に達した場合）は、設定で
+     * 「数え役満あり」の時だけ役満扱い
+     * （翻数はそのまま増やしてよいが、
+     * 点数は常に通常の役満1つ分で固定、
+     * 26翻・39翻などに達しても二倍・
+     * 三倍にはしない）。「数え役満なし」
+     * の設定なら三倍満止まりにする。
      */
     if (!isYakuman) {
+      if (!countedYakuman) {
+        return {
+          base: 6000,
+          name: "三倍満",
+        };
+      }
+
       return {
         base: 8000,
         name: "数え役満",
+      };
+    }
+
+    /*
+     * 実際に役満の役がある場合、
+     * 設定で「複合役満あり」の時だけ
+     * 13翻ごとに点数・名称ともに
+     * 倍化する。「複合役満なし」なら
+     * 何翻あっても常に単一の役満。
+     */
+    if (!compoundYakuman) {
+      return {
+        base: 8000,
+        name: getYakumanName(
+          1
+        ),
       };
     }
 
@@ -176,13 +198,17 @@ function getLimitBase(
   han: number,
   fu: number,
   kiriageMangan: boolean,
-  isYakuman: boolean
+  isYakuman: boolean,
+  countedYakuman: boolean,
+  compoundYakuman: boolean
 ): number {
   return getLimit(
     han,
     fu,
     kiriageMangan,
-    isYakuman
+    isYakuman,
+    countedYakuman,
+    compoundYakuman
   ).base;
 }
 
@@ -190,20 +216,25 @@ export function getLimitName(
   han: number,
   fu: number,
   kiriageMangan: boolean,
-  isYakuman: boolean
+  isYakuman: boolean,
+  countedYakuman: boolean,
+  compoundYakuman: boolean
 ): string | null {
   return getLimit(
     han,
     fu,
     kiriageMangan,
-    isYakuman
+    isYakuman,
+    countedYakuman,
+    compoundYakuman
   ).name;
 }
 
 export function calculateScore(
   han: number,
   fu: number,
-  settings: GameSettings
+  settings: GameSettings,
+  isYakuman: boolean
 ): Score {
   const dealer =
     isDealer(settings);
@@ -213,7 +244,9 @@ export function calculateScore(
       han,
       fu,
       settings.kiriageMangan,
-      false
+      isYakuman,
+      settings.countedYakuman,
+      settings.compoundYakuman
     );
 
   const ron = ceil100(
@@ -313,7 +346,8 @@ export function evaluateHand(
       : calculateScore(
           han,
           fu,
-          settings
+          settings,
+          hasYakuman(yaku)
         );
 
   return {

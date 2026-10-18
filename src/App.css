@@ -234,6 +234,15 @@ p {
   font-size: 16px;
 }
 
+/* 複合役満がOFFの時の単体ダブル役満など */
+.setting-row.is-disabled {
+  opacity: 0.35;
+}
+
+.setting-row.is-disabled input {
+  cursor: not-allowed;
+}
+
 /* 副露 */
 
 .meld-section {
@@ -809,7 +818,17 @@ td img {
    * よって入りきらなくなるため、vw単位で
    * 幅に比例したサイズにしている。
    */
-  .setting-line {
+  /*
+   * 場風・自風・連風牌の符・切り上げ満貫の
+   * 行（--basic）だけは項目数が固定4つで
+   * 320px幅でも1行に収まるようチューニング
+   * 済みなので、強制的に折り返さない。
+   * 役満ルール行（--yakuman）は項目数が
+   * 増える可能性があるため、無理に1行へ
+   * 詰め込まず、収まらなければ折り返す
+   * （偶発役・確定役と同じ方針）。
+   */
+  .setting-line--basic {
     flex-wrap: nowrap;
     gap: 0.8vw;
   }

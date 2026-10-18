@@ -43,6 +43,17 @@ export type GameSettings = {
   // 切り上げ満貫
   kiriageMangan: boolean;
 
+  // 数え役満あり
+  countedYakuman: boolean;
+
+  // 複合役満あり（役満が重なったら倍になる）
+  compoundYakuman: boolean;
+
+  // 単体ダブル役満あり（純正九蓮宝燈・国士無双十三面待ち・
+  // 四暗刻単騎などの手牌の形単体でのダブル役満。
+  // compoundYakuman が false の時は意味を持たない）
+  individualDoubleYakuman: boolean;
+
   // リーチ
   riichi: boolean;
 

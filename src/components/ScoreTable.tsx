@@ -368,7 +368,9 @@ function ScoreTable({
         settings.kiriageMangan,
         hasYakuman(
           evaluated.yaku
-        )
+        ),
+        settings.countedYakuman,
+        settings.compoundYakuman
       );
 
     const hanFuText = `${evaluated.han}翻${evaluated.fu}符`;

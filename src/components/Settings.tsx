@@ -154,6 +154,86 @@ function Settings({
           />
         </label>
       </div>
+
+      <div className="setting-line setting-line--yakuman">
+        <label className="setting-row">
+          <span>
+            数え役満
+          </span>
+
+          <input
+            type="checkbox"
+            checked={
+              settings.countedYakuman
+            }
+            onChange={(e) =>
+              onChange({
+                ...settings,
+                countedYakuman:
+                  e.target
+                    .checked,
+              })
+            }
+          />
+        </label>
+
+        <label className="setting-row">
+          <span>
+            役満の複合
+          </span>
+
+          <input
+            type="checkbox"
+            checked={
+              settings.compoundYakuman
+            }
+            onChange={(e) => {
+              const checked =
+                e.target.checked;
+
+              onChange({
+                ...settings,
+                compoundYakuman:
+                  checked,
+                individualDoubleYakuman:
+                  checked
+                    ? settings.individualDoubleYakuman
+                    : false,
+              });
+            }}
+          />
+        </label>
+
+        <label
+          className={`setting-row ${
+            !settings.compoundYakuman
+              ? "is-disabled"
+              : ""
+          }`}
+        >
+          <span>
+            二倍役満役
+          </span>
+
+          <input
+            type="checkbox"
+            checked={
+              settings.individualDoubleYakuman
+            }
+            disabled={
+              !settings.compoundYakuman
+            }
+            onChange={(e) =>
+              onChange({
+                ...settings,
+                individualDoubleYakuman:
+                  e.target
+                    .checked,
+              })
+            }
+          />
+        </label>
+      </div>
     </section>
   );
 }

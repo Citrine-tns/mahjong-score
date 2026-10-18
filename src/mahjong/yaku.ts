@@ -1031,6 +1031,7 @@ function checkSuuankou(
   hand: Hand,
   winMethod: WinMethod,
   winningTile: Tile | undefined,
+  settings: GameSettings,
   yaku: Yaku[]
 ) {
   if (
@@ -1073,10 +1074,34 @@ function checkSuuankou(
   }
 
   if (count === 4) {
+    /*
+     * 四暗刻単騎：和了牌が刻子ではなく
+     * 対子を完成させた場合（単騎待ち）。
+     * ロンの場合、和了牌が刻子側に
+     * マッチする組は上の除外ロジックで
+     * 数から外れるため、count===4に
+     * 達する時点で和了牌は必ず対子側
+     * ＝単騎確定。ツモの場合はこの
+     * 判定で単騎とシャンポンを
+     * 区別する。
+     */
+    const isTanki =
+      settings.compoundYakuman &&
+      settings.individualDoubleYakuman &&
+      winningTile !== undefined &&
+      getBaseTile(
+        decomposition.pair[0]
+      ) ===
+        getBaseTile(
+          winningTile
+        );
+
     addYaku(
       yaku,
-      "四暗刻",
-      13
+      isTanki
+        ? "四暗刻単騎"
+        : "四暗刻",
+      isTanki ? 26 : 13
     );
   }
 }
@@ -1166,6 +1191,7 @@ function checkRyuuiisou(
 
 function checkShousuushi(
   decomposition: HandDecomposition,
+  settings: GameSettings,
   yaku: Yaku[]
 ) {
   const windGroups =
@@ -1207,10 +1233,21 @@ function checkShousuushi(
   if (
     windGroups.length === 4
   ) {
+    /*
+     * 大四喜は単体で価値が上がる
+     * 役満として扱われることが多い
+     * （小四喜は単体では上がらない）。
+     * 「役満の複合」「二倍役満役」が
+     * 両方オンの時だけ26翻にする。
+     */
+    const isDouble =
+      settings.compoundYakuman &&
+      settings.individualDoubleYakuman;
+
     addYaku(
       yaku,
       "大四喜",
-      13
+      isDouble ? 26 : 13
     );
   }
 }
@@ -1218,6 +1255,7 @@ function checkShousuushi(
 function checkChuurenPoutou(
   hand: Hand,
   winningTile: Tile | undefined,
+  settings: GameSettings,
   yaku: Yaku[]
 ) {
   if (
@@ -1322,15 +1360,56 @@ function checkChuurenPoutou(
     }
   }
 
+  /*
+   * 純正九蓮宝燈：和了前の13枚
+   * （手出し牌を除く）が、すでに
+   * 1,1,1,2,3,4,5,6,7,8,9,9,9という
+   * 純正形になっている場合
+   * （数字が1〜9のどれで和了っても
+   * 成立する9面待ち）。それ以外は
+   * 和了牌によって2〜8のどこかが
+   * 埋まる通常の九蓮宝燈。
+   */
+  const isJunsei =
+    settings.compoundYakuman &&
+    settings.individualDoubleYakuman &&
+    winningTile !== undefined &&
+    (() => {
+      const preWinCounts = {
+        ...counts,
+      };
+
+      preWinCounts[
+        getNumber(winningTile)
+      ]--;
+
+      return (
+        preWinCounts[1] === 3 &&
+        preWinCounts[9] === 3 &&
+        [
+          2, 3, 4, 5, 6, 7, 8,
+        ].every(
+          (number) =>
+            preWinCounts[
+              number
+            ] === 1
+        )
+      );
+    })();
+
   addYaku(
     yaku,
-    "九蓮宝燈",
-    13
+    isJunsei
+      ? "純正九蓮宝燈"
+      : "九蓮宝燈",
+    isJunsei ? 26 : 13
   );
 }
 
 function checkSpecial(
   decomposition: HandDecomposition,
+  hand: Hand,
+  settings: GameSettings,
   yaku: Yaku[]
 ) {
   if (
@@ -1348,10 +1427,31 @@ function checkSpecial(
     decomposition.specialType ===
     "kokushi"
   ) {
+    /*
+     * 国士無双は副露不可なので
+     * hand.concealed は常に和了牌を
+     * 除いた13枚。13種類すべてが
+     * 重複無しに揃っていれば、
+     * どれが来ても和了れる
+     * 十三面待ち。すでにどれか1種類が
+     * 対子になっていれば、残り1種類
+     * だけを待つ通常の国士無双。
+     */
+    const isThirteenWait =
+      settings.compoundYakuman &&
+      settings.individualDoubleYakuman &&
+      new Set(
+        hand.concealed.map(
+          getBaseTile
+        )
+      ).size === 13;
+
     addYaku(
       yaku,
-      "国士無双",
-      13
+      isThirteenWait
+        ? "国士無双十三面待ち"
+        : "国士無双",
+      isThirteenWait ? 26 : 13
     );
   }
 }
@@ -1388,6 +1488,8 @@ export function getYaku(
 
   checkSpecial(
     decomposition,
+    hand,
+    settings,
     yaku
   );
 
@@ -1423,6 +1525,7 @@ export function getYaku(
     checkChuurenPoutou(
       hand,
       winningTile,
+      settings,
       yaku
     );
   }
@@ -1529,6 +1632,7 @@ export function getYaku(
     hand,
     winMethod,
     winningTile,
+    settings,
     yaku
   );
 
@@ -1549,6 +1653,7 @@ export function getYaku(
 
   checkShousuushi(
     decomposition,
+    settings,
     yaku
   );
 
